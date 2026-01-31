@@ -110,4 +110,5 @@ else:
 
 # Footer
 st.markdown("---")
-st.markdown("Automated by Gemini • Built for Efficiency")
+
+st.markdown("Made with a lot of ☕ by Ibrahim Samir")
