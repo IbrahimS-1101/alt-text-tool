@@ -1,5 +1,5 @@
 import streamlit as st
-import google.generativeai as genai
+from gemini_model import create_gemini_client, generate_content_with_fallback, get_response_text
 from PIL import Image
 import os
 # We don't need dotenv for Cloud, but good to keep for local testing
@@ -21,12 +21,15 @@ st.title("👁️ Alt-Text Automator")
 st.markdown("Generates SEO-friendly and Accessible description tags for your images.")
 
 # Try to get key from Streamlit Secrets (Cloud) OR Local Environment
-api_key = None
+def get_configured_api_key():
+    try:
+        secret_key = st.secrets.get("GEMINI_API_KEY")
+    except Exception:
+        secret_key = None
+    return str(secret_key or os.getenv("GEMINI_API_KEY") or "").strip() or None
 
-if "GEMINI_API_KEY" in st.secrets:
-    api_key = st.secrets["GEMINI_API_KEY"]
-elif os.getenv("GEMINI_API_KEY"):
-    api_key = os.getenv("GEMINI_API_KEY")
+
+api_key = get_configured_api_key()
 
 with st.sidebar:
     st.header("⚙️ Configuration")
@@ -43,13 +46,12 @@ with st.sidebar:
     st.markdown("---")
     st.markdown("### 🛠️ Settings")
     mode = st.radio("Optimization Goal:", ["Accessibility (Standard)", "SEO (Marketing)"])
+    st.caption("Model selection: automatic discovery with fallback.")
 
 # --- 2. THE LOGIC ---
 def generate_alt_text(image, context, mode, api_key):
     try:
-        genai.configure(api_key=api_key)
-        # Using the Lite model we verified works
-        model = genai.GenerativeModel('gemini-2.5-flash-lite')
+        client = create_gemini_client(api_key)
         
         # Dynamic Prompting based on Mode
         if mode == "SEO (Marketing)":
@@ -74,8 +76,8 @@ def generate_alt_text(image, context, mode, api_key):
             4. Be strictly factual.
             """
 
-        response = model.generate_content([task, image])
-        return response.text
+        response, model_name = generate_content_with_fallback(client, [task, image], api_key)
+        return get_response_text(response), model_name
     except Exception as e:
         return f"Error: {str(e)}"
 
@@ -98,12 +100,13 @@ if uploaded_file:
             st.error("System is missing API credentials.")
         else:
             with st.spinner("Analyzing pixels..."):
-                result = generate_alt_text(image, context_text, mode, api_key)
+                result, model_name = generate_alt_text(image, context_text, mode, api_key)
                 
                 # Success Display
                 st.success("Generated Successfully!")
                 st.code(result, language="text")
                 st.caption(f"Character count: {len(result)}")
+                st.caption(f"Model used: {model_name}")
 
 else:
     st.info("👆 Upload an image to get started.")
