@@ -79,7 +79,7 @@ def generate_alt_text(image, context, mode, api_key):
         response, model_name = generate_content_with_fallback(client, [task, image], api_key)
         return get_response_text(response), model_name
     except Exception as e:
-        return f"Error: {str(e)}"
+        return f"Error: {str(e)}", None
 
 # --- 3. THE UI ---
 uploaded_file = st.file_uploader("Upload an Image (JPG, PNG, WEBP)", type=["jpg", "jpeg", "png", "webp"])
@@ -103,10 +103,13 @@ if uploaded_file:
                 result, model_name = generate_alt_text(image, context_text, mode, api_key)
                 
                 # Success Display
-                st.success("Generated Successfully!")
-                st.code(result, language="text")
-                st.caption(f"Character count: {len(result)}")
-                st.caption(f"Model used: {model_name}")
+                if model_name:
+                    st.success("Generated Successfully!")
+                    st.code(result, language="text")
+                    st.caption(f"Character count: {len(result)}")
+                    st.caption(f"Model used: {model_name}")
+                else:
+                    st.error(result)
 
 else:
     st.info("👆 Upload an image to get started.")
