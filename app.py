@@ -57,7 +57,11 @@ Page context:
 
 
 st.set_page_config(page_title="Alt Text Tool", page_icon="👁️", initial_sidebar_state="collapsed")
-tool_header("Alt Text Tool", "Write an image description that makes sense where the image appears.")
+tool_header(
+    "Alt Text Tool",
+    "Write an image description that makes sense where the image appears.",
+    "اكتب نصًا بديلًا بالعربية أو الإنجليزية حسب استخدام الصورة، وانسخه كنص عادي أو بصيغة HTML.",
+)
 
 image = None
 upload = None
